@@ -5,7 +5,7 @@ from databricks.sdk.errors import DatabricksError
 # Initialize Databricks client (uses app service identity automatically)
 w = WorkspaceClient()
 
-ENDPOINT_NAME = "https://dbc-41fdb423-e2e5.cloud.databricks.com/serving-endpoints/drug_chatbot/invocations"
+ENDPOINT_NAME = "drug_chatbot"
 
 st.set_page_config(page_title="Drug Info AI Assistant", layout="wide")
 st.title("Drug Info AI Assistant")
@@ -29,13 +29,13 @@ if prompt:
         st.markdown(prompt)
 
     try:
-        # Query serving endpoint
+        # Query serving endpoint with full conversation history for multi-turn chat
         response = w.serving_endpoints.query(
             name=ENDPOINT_NAME,
-            messages=[{"role": "user", "content": prompt}]
+            messages=st.session_state.messages
         )
 
-        # Extract response (for foundation/chat endpoints)
+        # Extract response
         answer = response.choices[0].message.content
 
     except DatabricksError as e:
