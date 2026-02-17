@@ -1,9 +1,13 @@
 import streamlit as st
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import DatabricksError
+import requests
+
 
 # Initialize Databricks client (uses app service identity automatically)
 w = WorkspaceClient()
+token = w.config.token
+host = w.config.host
 
 ENDPOINT_NAME = "drug_chatbot"
 
@@ -29,14 +33,13 @@ if prompt:
         st.markdown(prompt)
 
     try:
-        # Query serving endpoint with full conversation history for multi-turn chat
-        response = w.serving_endpoints.query(
-            name=ENDPOINT_NAME,
-            messages=st.session_state.messages
+        response = requests.post(
+            f"{host}/serving-endpoints/{ENDPOINT_NAME}/invocations",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"inputs": {"query": prompt}}
         )
-
-        # Extract response
-        answer = response.predictions["result"]
+        response.raise_for_status()
+        answer = response.json()["predictions"]["result"]
 
     except DatabricksError as e:
         answer = f"Databricks error: {str(e)}"
