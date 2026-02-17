@@ -36,7 +36,7 @@ if prompt:
         )
 
         # Extract response
-        answer = response.choices[0].message.content
+        answer = response.predictions["result"]
 
     except DatabricksError as e:
         answer = f"Databricks error: {str(e)}"
