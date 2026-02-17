@@ -34,8 +34,8 @@ if prompt:
             f"/serving-endpoints/{ENDPOINT_NAME}/invocations",
             body={"inputs": {"query": prompt}}
         )
-        st.write(response)  # ADD THIS TEMPORARILY
-        answer = response["predictions"][0]["result"]
+
+        answer = response["predictions"][0]
 
     except DatabricksError as e:
         answer = f"Databricks error: {str(e)}"
