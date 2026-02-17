@@ -1,9 +1,6 @@
 import streamlit as st
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import DatabricksError
-import requests
-import os
-
 
 # Initialize Databricks client (uses app service identity automatically)
 w = WorkspaceClient()
@@ -32,16 +29,12 @@ if prompt:
         st.markdown(prompt)
 
     try:
-        token = w.secrets.get_secret(scope="project-dev", key="databricks-token").value
-        host = w.config.host.rstrip("/")
-
-        response = requests.post(
-        f"{host}/serving-endpoints/{ENDPOINT_NAME}/invocations",
-        headers={"Authorization": f"Bearer {token}"},
-        json={"inputs": {"query": prompt}}
+        response = w.api_client.do(
+            "POST",
+            f"/serving-endpoints/{ENDPOINT_NAME}/invocations",
+            body={"inputs": {"query": prompt}}
         )
-        response.raise_for_status()
-        answer = response.json()["predictions"]["result"]
+        answer = response["predictions"]["result"]
 
     except DatabricksError as e:
         answer = f"Databricks error: {str(e)}"
