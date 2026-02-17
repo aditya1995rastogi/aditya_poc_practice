@@ -2,12 +2,13 @@ import streamlit as st
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import DatabricksError
 import requests
+import os
 
 
 # Initialize Databricks client (uses app service identity automatically)
 w = WorkspaceClient()
-token = w.config.token
-host = w.config.host
+token = os.environ["DATABRICKS_TOKEN"]
+host = "https://dbc-41fdb423-e2e5.cloud.databricks.com"
 
 ENDPOINT_NAME = "drug_chatbot"
 
