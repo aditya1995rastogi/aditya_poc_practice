@@ -1,9 +1,1 @@
 command: streamlit run app.py --server.port 8000 --server.address 0.0.0.0
-
-env:
-  - name: PYTHONUNBUFFERED
-    value: "1"
-
-resources:
-  cpu: 2
-  memory: 6Gi
