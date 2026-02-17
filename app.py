@@ -7,8 +7,6 @@ import os
 
 # Initialize Databricks client (uses app service identity automatically)
 w = WorkspaceClient()
-token = os.environ["DATABRICKS_TOKEN"]
-host = "https://dbc-41fdb423-e2e5.cloud.databricks.com"
 
 ENDPOINT_NAME = "drug_chatbot"
 
@@ -34,10 +32,13 @@ if prompt:
         st.markdown(prompt)
 
     try:
+        token = w.secrets.get_secret(scope="project-dev", key="databricks-token").value
+        host = w.config.host.rstrip("/")
+
         response = requests.post(
-            f"{host}/serving-endpoints/{ENDPOINT_NAME}/invocations",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"inputs": {"query": prompt}}
+        f"{host}/serving-endpoints/{ENDPOINT_NAME}/invocations",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"inputs": {"query": prompt}}
         )
         response.raise_for_status()
         answer = response.json()["predictions"]["result"]
