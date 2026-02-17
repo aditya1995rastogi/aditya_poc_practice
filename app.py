@@ -1,50 +1,50 @@
 import streamlit as st
-import requests
-import os
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.errors import DatabricksError
 
-os.environ["DATABRICKS_TOKEN"] = dbutils.secrets.get(scope="project-dev", key="databricks-token")
+# Initialize Databricks client (uses app service identity automatically)
+w = WorkspaceClient()
 
-st.set_page_config(page_title="Drug Info AI Assistant")
+ENDPOINT_NAME = "https://dbc-41fdb423-e2e5.cloud.databricks.com/serving-endpoints/drug_chatbot/invocations"
 
+st.set_page_config(page_title="Drug Info AI Assistant", layout="wide")
 st.title("Drug Info AI Assistant")
 
+# Store conversation in session
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display previous chat messages
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# Chat input
 prompt = st.chat_input("Ask about a drug...")
 
 if prompt:
+    # Show user message
     st.session_state.messages.append({"role": "user", "content": prompt})
-
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    url = "https://dbc-41fdb423-e2e5.cloud.databricks.com/serving-endpoints/drug_chatbot/invocations"
+    try:
+        # Query serving endpoint
+        response = w.serving_endpoints.query(
+            name=ENDPOINT_NAME,
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    headers = {
-        "Authorization": f"Bearer {os.environ['DATABRICKS_TOKEN']}",
-        "Content-Type": "application/json"
-    }
+        # Extract response (for foundation/chat endpoints)
+        answer = response.choices[0].message.content
 
-    payload = {
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
-    }
+    except DatabricksError as e:
+        answer = f"Databricks error: {str(e)}"
 
-    response = requests.post(url, headers=headers, json=payload)
+    except Exception as e:
+        answer = f"Unexpected error: {str(e)}"
 
-    if response.status_code == 200:
-        result = response.json()
-        answer = result.get("choices", [{}])[0].get("message", {}).get("content", "No response")
-    else:
-        answer = response.text
-
+    # Show assistant message
     st.session_state.messages.append({"role": "assistant", "content": answer})
-
     with st.chat_message("assistant"):
         st.markdown(answer)
